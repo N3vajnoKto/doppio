@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-
 #include <scheduler/task.h>
 
 #include <ranges>
