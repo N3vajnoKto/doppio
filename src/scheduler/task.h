@@ -23,8 +23,13 @@ class [[nodiscard]] Task {
 
         void unhandled_exception() noexcept {}
 
-        auto initial_suspend() noexcept { return std::suspend_always(); }
-        auto final_suspend() noexcept { return FinalAwaiter(); }
+        auto initial_suspend() noexcept {
+            return std::suspend_always();
+        }
+
+        auto final_suspend() noexcept {
+            return FinalAwaiter();
+        }
 
         template <std::convertible_to<T> S>
         void return_value(S&& value) {
@@ -33,10 +38,13 @@ class [[nodiscard]] Task {
     };
 
     class Awaiter {
-      public:
-        Awaiter(std::coroutine_handle<Promise> handle) noexcept : handle_(handle) {}
+    public:
+        Awaiter(std::coroutine_handle<Promise> handle) noexcept
+            : handle_(handle) {}
 
-        bool await_ready() noexcept { return !handle_ || handle_.done(); }
+        bool await_ready() noexcept {
+            return !handle_ || handle_.done();
+        }
 
         std::coroutine_handle<> await_suspend(std::coroutine_handle<> calling) noexcept {
             handle_.promise().continuation = calling;
@@ -44,23 +52,25 @@ class [[nodiscard]] Task {
         }
 
         template <class S = T>
-        requires(!std::is_same_v<void, S>)
+            requires (!std::is_same_v<void, S>)
         auto await_resume() {
             return std::move(handle_.promise().result);
         }
 
         template <class S = T>
-        requires(std::is_same_v<void, S>)
+            requires (std::is_same_v<void, S>)
         void await_resume() noexcept {}
 
-      private:
+    private:
         std::coroutine_handle<Promise> handle_;
     };
 
     class FinalAwaiter {
-      public:
-        bool await_ready() noexcept { return false; }
-        
+    public:
+        bool await_ready() noexcept {
+            return false;
+        }
+
         auto await_suspend(std::coroutine_handle<Promise> self) noexcept {
             return self.promise().continuation;
         }
@@ -68,11 +78,11 @@ class [[nodiscard]] Task {
         void await_resume() noexcept {}
     };
 
-
-  public:
+public:
     using promise_type = Promise;
 
-    explicit Task(std::coroutine_handle<Promise> self) noexcept : handle_(self) {}
+    explicit Task(std::coroutine_handle<Promise> self) noexcept
+        : handle_(self) {}
 
     ~Task() {
         if (handle_) {
@@ -84,22 +94,24 @@ class [[nodiscard]] Task {
 
     Task& operator=(const Task&) = delete;
 
-    auto operator co_await() noexcept { return Awaiter(handle_); }
+    auto operator co_await() noexcept {
+        return Awaiter(handle_);
+    }
 
-    template<class S = T>
-    requires(!std::is_same_v<void, S>)
+    template <class S = T>
+        requires (!std::is_same_v<void, S>)
     S operator()() {
         handle_.resume();
         return handle_.promise().result;
     }
 
-    template<class S = T>
-    requires(std::is_same_v<void, S>)
+    template <class S = T>
+        requires (std::is_same_v<void, S>)
     void operator()() {
         handle_.resume();
     }
 
-  private:
+private:
     std::coroutine_handle<Promise> handle_;
 };
 
@@ -107,14 +119,23 @@ template <>
 struct Task<void>::Promise {
     std::coroutine_handle<> continuation = std::noop_coroutine();
 
-    auto get_return_object() { return Task(std::coroutine_handle<Promise>::from_promise(*this)); }
+    auto get_return_object() {
+        return Task(std::coroutine_handle<Promise>::from_promise(*this));
+    }
 
     void unhandled_exception() noexcept {}
 
-    auto initial_suspend() noexcept { return std::suspend_always(); }
-    auto final_suspend() noexcept { return FinalAwaiter(); }
+    auto initial_suspend() noexcept {
+        return std::suspend_always();
+    }
 
-    void return_void() {}
+    auto final_suspend() noexcept {
+        return FinalAwaiter();
+    }
+
+    void return_void() {
+        
+    }
 };
 
 } // namespace scheduler
