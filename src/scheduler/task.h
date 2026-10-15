@@ -133,9 +133,7 @@ struct Task<void>::Promise {
         return FinalAwaiter();
     }
 
-    void return_void() {
-
-    }
+    void return_void() {}
 };
 
-} // namespace scheduler
+} // namespace doppio
