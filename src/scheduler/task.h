@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace scheduler {
+namespace doppio {
 
 template <class T = void>
 class [[nodiscard]] Task {
@@ -39,7 +39,7 @@ class [[nodiscard]] Task {
 
     class Awaiter {
     public:
-        Awaiter(std::coroutine_handle<Promise> handle) noexcept
+        explicit Awaiter(std::coroutine_handle<Promise> handle) noexcept
             : handle_(handle) {}
 
         bool await_ready() noexcept {
@@ -134,7 +134,7 @@ struct Task<void>::Promise {
     }
 
     void return_void() {
-        
+
     }
 };
 
