@@ -5,12 +5,12 @@
 
 int counter = 0;
 
-scheduler::Task<void> f() {
+doppio::Task<void> f() {
     counter++;
     co_return;
 }
 
-scheduler::Task<void> loop(int n) {
+doppio::Task<void> loop(int n) {
     for (int i : std::ranges::iota_view(0, n)) {
         co_await f();
     }

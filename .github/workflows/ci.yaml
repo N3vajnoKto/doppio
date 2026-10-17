@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install llvm
         run: |
@@ -26,7 +28,8 @@ jobs:
       - name: Run clang-format check
         run: |
           find src include -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) \
-            -print0 | xargs -0 clang-format-23 --dry-run --Werror
+            -print0 | xargs -0 clang-format-23 --dry-run --Werror \
+            --style=file:kit/.clang-format
       
       - name: Generate compile_commands.json
         run: |
@@ -35,4 +38,6 @@ jobs:
       - name: Run clang-tidy
         run: |
           find src -type f \( -name '*.cpp' \) -print0 \
-            | xargs -0 clang-tidy-23 -p build
+            | xargs -0 clang-tidy-23 -p build \
+            --config-file=kit/.clang-tidy
+
