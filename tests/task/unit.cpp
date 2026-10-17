@@ -3,6 +3,8 @@
 
 #include <ranges>
 
+namespace {
+
 int counter = 0;
 
 doppio::Task<void> f() {
@@ -15,6 +17,7 @@ doppio::Task<void> loop(int n) {
         co_await f();
     }
 }
+} // namespace
 
 TEST(Task, JustWorks) {
     const int N = 1'000'000;
