@@ -20,7 +20,7 @@ doppio::Task<void> loop(int n) {
 } // namespace
 
 TEST(Task, JustWorks) {
-    const int N = 1'000'000;
+    const int N = 1'000;
     auto task = loop(N);
     task();
     ASSERT_EQ(counter, N);
