@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  clang-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      -name: Checkout
+      uses: actions/checkout@v4
+
+      -name: Install llvm
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh 23
+        sudo apt-get install -y clang-format-23 clang-tidy-23
+      
+      -name: Verify versions
+      run: |
+        clang-format-23 --version
+        clang-tidy-23 --version
+
+      -name: Run clang-format check
+      run: |
+        find src include -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) \
+          -print0 | xargs -0 clang-format-23 --dry-run --Werror
+      
+      -name: Generate compile_commands.json
+      run: |
+        cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      -name: Run clang-tidy
+      run: |
+        find src -type f \( -name '*.cpp' \) -print0 \
+          | xargs -0 clang-tidy-23 -p build
