@@ -13,7 +13,7 @@ doppio::Task<void> f() {
 }
 
 doppio::Task<void> loop(int n) {
-    for (int i : std::ranges::iota_view(0, n)) {
+    for (int _ : std::ranges::iota_view(0, n)) {
         co_await f();
     }
 }
