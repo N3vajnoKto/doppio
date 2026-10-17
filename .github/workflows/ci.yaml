@@ -41,6 +41,7 @@ jobs:
             | xargs -0 clang-tidy-23 -p build \
             --config-file=kit/.clang-tidy
   tests:
+    needs: clang-checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
