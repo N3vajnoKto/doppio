@@ -1,9 +1,15 @@
 cmake_minimum_required(VERSION 3.30)
 
-project(scheduler LANGUAGES CXX)
+project(doppio LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+include_directories(src)
+
+
+include_directories(src)
 include(FetchContent)
 
 FetchContent_Declare(
@@ -14,11 +20,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(googletest)
 
+include(GoogleTest)
 enable_testing()
 
-file(GLOB tests_src tests/*/*.cpp)
+file(GLOB_RECURSE tests_src tests/*.cpp)
 
 add_executable(tests ${tests_src})
 
 target_link_libraries(tests PRIVATE gtest_main gmock)
 target_include_directories(tests PUBLIC src)
+
+gtest_discover_tests(tests)

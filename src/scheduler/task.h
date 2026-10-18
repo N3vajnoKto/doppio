@@ -15,13 +15,16 @@ class [[nodiscard]] Task {
 
     struct Promise {
         std::coroutine_handle<> continuation = std::noop_coroutine();
+        std::exception_ptr exception_ptr = nullptr;
         T result;
 
         Task get_return_object() noexcept {
             return Task(std::coroutine_handle<Promise>::from_promise(*this));
         }
 
-        void unhandled_exception() noexcept {}
+        void unhandled_exception() noexcept {
+            exception_ptr = std::current_exception();
+        }
 
         auto initial_suspend() noexcept {
             return std::suspend_always();
@@ -54,12 +57,19 @@ class [[nodiscard]] Task {
         template <class S = T>
             requires (!std::is_same_v<void, S>)
         auto await_resume() {
+            if (auto ptr = handle_.promise().exception_ptr; ptr) {
+                std::rethrow_exception(ptr);
+            }
             return std::move(handle_.promise().result);
         }
 
         template <class S = T>
             requires (std::is_same_v<void, S>)
-        void await_resume() noexcept {}
+        void await_resume() {
+            if (auto ptr = handle_.promise().exception_ptr; ptr) {
+                std::rethrow_exception(ptr);
+            }
+        }
 
     private:
         std::coroutine_handle<Promise> handle_;
@@ -102,6 +112,9 @@ public:
         requires (!std::is_same_v<void, S>)
     S operator()() {
         handle_.resume();
+        if (auto ptr = handle_.promise().exception_ptr; ptr) {
+            std::rethrow_exception(ptr);
+        }
         return handle_.promise().result;
     }
 
@@ -109,6 +122,9 @@ public:
         requires (std::is_same_v<void, S>)
     void operator()() {
         handle_.resume();
+        if (auto ptr = handle_.promise().exception_ptr; ptr) {
+            std::rethrow_exception(ptr);
+        }
     }
 
 private:
@@ -118,12 +134,15 @@ private:
 template <>
 struct Task<void>::Promise {
     std::coroutine_handle<> continuation = std::noop_coroutine();
+    std::exception_ptr exception_ptr = nullptr;
 
     auto get_return_object() {
         return Task(std::coroutine_handle<Promise>::from_promise(*this));
     }
 
-    void unhandled_exception() noexcept {}
+    void unhandled_exception() noexcept {
+        exception_ptr = std::current_exception();
+    }
 
     auto initial_suspend() noexcept {
         return std::suspend_always();
