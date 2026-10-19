@@ -42,8 +42,12 @@ class [[nodiscard]] Task {
 
     class Awaiter {
     public:
-        explicit Awaiter(std::coroutine_handle<Promise> handle) noexcept
-            : handle_(handle) {}
+        explicit Awaiter(std::coroutine_handle<Promise> handle)
+            : handle_(handle) {
+            if (!handle_) {
+                throw TaskDeletedError();
+            }
+        }
 
         bool await_ready() noexcept {
             return !handle_ || handle_.done();
@@ -95,22 +99,39 @@ public:
         : handle_(self) {}
 
     ~Task() {
-        if (handle_) {
-            handle_.destroy();
-        }
+        destroy();
     }
 
     Task(const Task&) = delete;
 
     Task& operator=(const Task&) = delete;
 
-    auto operator co_await() noexcept {
+    Task(Task&& other) noexcept {
+        if (this != &other) {
+            destroy();
+            handle_ = std::exchange(other.handle_, nullptr);
+        }
+    };
+
+    Task& operator=(Task&& other) noexcept {
+        if (this != &other) {
+            destroy();
+            handle_ = std::exchange(other.handle_, nullptr);
+        }
+
+        return *this;
+    };
+
+    auto operator co_await() {
         return Awaiter(handle_);
     }
 
     template <class S = T>
         requires (!std::is_same_v<void, S>)
     S operator()() {
+        if (!handle_) {
+            throw TaskDeletedError();
+        }
         handle_.resume();
         if (auto ptr = handle_.promise().exception_ptr; ptr) {
             std::rethrow_exception(ptr);
@@ -121,6 +142,9 @@ public:
     template <class S = T>
         requires (std::is_same_v<void, S>)
     void operator()() {
+        if (!handle_) {
+            throw TaskDeletedError();
+        }
         handle_.resume();
         if (auto ptr = handle_.promise().exception_ptr; ptr) {
             std::rethrow_exception(ptr);
@@ -128,6 +152,12 @@ public:
     }
 
 private:
+    void destroy() {
+        if (handle_) {
+            handle_.destroy();
+        }
+    }
+
     std::coroutine_handle<Promise> handle_;
 };
 
