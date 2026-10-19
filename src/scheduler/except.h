@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-namespace scheduler {
+namespace doppio {
 
 class TaskExecutionError : public std::runtime_error {
 public:
@@ -12,4 +12,12 @@ public:
     TaskExecutionError(TaskExecutionError&&) noexcept = default;
 };
 
-} // namespace scheduler
+class TaskDeletedError : public std::runtime_error {
+public:
+    explicit TaskDeletedError(const char* msg = "Task coroutine is nullptr")
+        : std::runtime_error(msg) {}
+
+    TaskDeletedError(TaskDeletedError&&) noexcept = default;
+};
+
+} // namespace doppio

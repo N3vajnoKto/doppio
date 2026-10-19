@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <scheduler/except.h>
 #include <scheduler/task.h>
 
 #include <ranges>
@@ -107,4 +108,49 @@ TEST(Task, Stress) {
     ASSERT_THROW(task(), std::runtime_error);
     EXPECT_EQ(counter, N);
     EXPECT_EQ(except_counter, N);
+}
+
+namespace {
+
+Task<int> Dummy(int result) {
+    co_return result;
+}
+
+} // namespace
+
+TEST(Task, Move) {
+    const int mem = 1337;
+    {
+        auto a = Dummy(mem);
+        auto b = std::move(a);
+        auto c = Dummy(0);
+        c = std::move(b);
+        ASSERT_EQ(c(), mem);
+        ASSERT_ANY_THROW(b());
+    }
+    {
+        std::vector<Task<int>> a;
+
+        a.push_back(Dummy(1));
+        a.push_back(Dummy(2));
+        a.push_back(Dummy(3));
+
+        EXPECT_EQ(a[0](), 1);
+        EXPECT_EQ(a[1](), 2);
+        EXPECT_EQ(a[2](), 3);
+    }
+}
+
+namespace {
+
+Task<void> CallDeletedTask() {
+    auto t = Dummy(1);
+    auto _ = std::move(t);
+    co_await t;
+}
+
+} // namespace
+
+TEST(Task, DeletedTask) {
+    ASSERT_THROW(CallDeletedTask()(), TaskDeletedError);
 }
