@@ -9,20 +9,22 @@
 
 namespace {
 
+using namespace doppio;
+
 // Reference parameters are safe here: tasks are resumed synchronously in the caller's scope.
-doppio::Task<void> addCounter(int& counter) {
+Task<void> addCounter(int& counter) {
     counter++;
     co_return;
 }
 
-doppio::Task<void> loopCounter(int& counter, int n) {
+Task<void> loopCounter(int& counter, int n) {
     // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores): the loop index is intentionally unused
-    for (int i : std::ranges::iota_view(0, n)) {
+    for (int i : std::ranges::views::iota(0, n)) {
         co_await addCounter(counter);
     }
 }
 
-doppio::Task<int> recurseCount(int depth) {
+Task<int> recurseCount(int depth) {
     if (depth == 0) {
         co_return 0;
     }
@@ -51,8 +53,6 @@ TEST(Task, TasksLoop) {
 }
 
 TEST(Task, RecurseTask) {
-    int counter = 0;
-
     const int depth = 5;
 
     auto sum = recurseCount(depth)();
@@ -61,11 +61,11 @@ TEST(Task, RecurseTask) {
 
 namespace {
 
-doppio::Task<void> throwException(const std::string& message) { throw std::runtime_error(message); }
+Task<void> throwException(const std::string& message) { throw std::runtime_error(message); }
 
-doppio::Task<void> callThrowable(const std::string& message) { co_await throwException(message); }
+Task<void> callThrowable(const std::string& message) { co_await throwException(message); }
 
-doppio::Task<bool> catchException(const std::string& message) {
+Task<bool> catchException(const std::string& message) {
     try {
         co_await throwException(message);
         co_return false;
@@ -84,7 +84,7 @@ TEST(Task, Exception) {
 
 namespace {
 
-doppio::Task<void> loopCounterWithException(int& counter, int& except_counter, int n) {
+Task<void> loopCounterWithException(int& counter, int& except_counter, int n) {
     // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores): the loop index is intentionally unused
     for (int i : std::ranges::iota_view(0, n)) {
         co_await addCounter(counter);
@@ -111,7 +111,7 @@ TEST(Task, Stress) {
 
 namespace {
 
-doppio::Task<int> dummy(int result) { co_return result; }
+Task<int> dummy(int result) { co_return result; }
 
 } // namespace
 
@@ -123,11 +123,11 @@ TEST(Task, Move) {
         auto c = dummy(0);
         c = std::move(b);
         ASSERT_EQ(c(), mem);
-        // NOLINTNEXTLINE(bugprone-use-after-move): the test checks that a moved-from task throws
-        ASSERT_ANY_THROW(b());
+        // Intentionally verify the moved-from task rejects execution.
+        ASSERT_THROW(b(), TaskDeletedError); // NOLINT(bugprone-use-after-move)
     }
     {
-        std::vector<doppio::Task<int>> a;
+        std::vector<Task<int>> a;
 
         a.push_back(dummy(1));
         a.push_back(dummy(2));
@@ -141,7 +141,7 @@ TEST(Task, Move) {
 
 namespace {
 
-doppio::Task<void> callDeletedTask() {
+Task<void> callDeletedTask() {
     auto t = dummy(1);
     [[maybe_unused]] auto moved = std::move(t);
     // NOLINTNEXTLINE(bugprone-use-after-move): the test checks that awaiting a moved-from task throws
@@ -150,4 +150,4 @@ doppio::Task<void> callDeletedTask() {
 
 } // namespace
 
-TEST(Task, DeletedTask) { ASSERT_THROW(callDeletedTask()(), doppio::TaskDeletedError); }
+TEST(Task, DeletedTask) { ASSERT_THROW(callDeletedTask()(), TaskDeletedError); }
