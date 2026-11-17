@@ -31,18 +31,18 @@ jobs:
 
       - name: Run clang-format check
         run: |
-          find src tests include -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) \
-            -print0 | xargs -0 clang-format-23 --dry-run --Werror \
+          find src tests -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) \
+            -print0 | xargs -0 -r clang-format-23 --dry-run --Werror \
             --style=file:kit/.clang-format
       
       - name: Generate compile_commands.json
         run: |
-          cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_COMPILER=clang++-23
 
       - name: Run clang-tidy
         run: |
-          find src tests include -type f \( -name '*.cpp' \) -print0 \
-            | xargs -0 clang-tidy-23 -p build \
+          find src tests -type f \( -name '*.cpp' \) -print0 \
+            | xargs -0 -r clang-tidy-23 -p build \
             --config-file=kit/.clang-tidy
   tests:
     needs: clang-checks

@@ -136,12 +136,8 @@
 5. Короткие имена допустимы только для локальных переменных с узкой областью видимости; остальные
    имена должны отражать смысл.
 6. Нелокальные `enum` — только `enum class`.
-7. Имена файлов повторяют содержимое: один класс — `CamelCase.h`, одна функция — `camelCase.cpp`.
+7. Имена файлов повторяют содержимое: один класс — `snake_case.h`, одна функция — `snake_case.cpp`.
    Заголовки — `.h`, исходники — `.cpp`.
-8. Имена корутинных хуков (`await_ready`, `await_suspend`, `await_resume`, `get_return_object`,
-   `unhandled_exception`, `initial_suspend`, `final_suspend`, `return_value`, `return_void`)
-   фиксированы стандартом и остаются в `snake_case` — для них сделано исключение в `clang-tidy`.
-   То же касается `promise_type`.
 
 ## Комментарии
 
